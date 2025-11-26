@@ -1,0 +1,68 @@
+{
+  "name": "UserProfile",
+  "type": "object",
+  "properties": {
+    "military_branch": {
+      "type": "string",
+      "enum": [
+        "Army",
+        "Navy",
+        "Air Force",
+        "Marines",
+        "Coast Guard",
+        "Space Force",
+        "Other"
+      ]
+    },
+    "mos_code": {
+      "type": "string",
+      "description": "Military Occupational Specialty code"
+    },
+    "years_of_service": {
+      "type": "number"
+    },
+    "separation_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "career_goals": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Career interests and goals"
+    },
+    "current_skills": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "target_industry": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
+    },
+    "education_level": {
+      "type": "string",
+      "enum": [
+        "High School",
+        "Some College",
+        "Associate",
+        "Bachelor",
+        "Master",
+        "Doctorate"
+      ]
+    },
+    "using_gi_bill": {
+      "type": "boolean",
+      "default": false
+    },
+    "onboarding_completed": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": []
+}
