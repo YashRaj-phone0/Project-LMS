@@ -1,0 +1,283 @@
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '../utils';
+import { base44 } from '@/api/base44Client';
+import { useQuery } from '@tanstack/react-query';
+import { 
+  BookOpen, 
+  Users, 
+  Award, 
+  TrendingUp, 
+  CheckCircle, 
+  ArrowRight,
+  Target,
+  Zap,
+  Shield
+} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import HeroWithStreaks from '../components/HeroWithStreaks';
+
+export default function Home() {
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    base44.auth.me().then(setUser).catch(() => {});
+  }, []);
+
+  const { data: enrollments = [] } = useQuery({
+    queryKey: ['enrollments', user?.email],
+    queryFn: () => user ? base44.entities.Enrollment.filter({ user_email: user.email }) : [],
+    enabled: !!user
+  });
+
+  const { data: courses = [] } = useQuery({
+    queryKey: ['featured-courses'],
+    queryFn: () => base44.entities.Course.filter({ is_featured: true }, '-created_date', 3)
+  });
+
+  const stats = [
+    { 
+      icon: BookOpen, 
+      label: 'Courses Available', 
+      value: '120+',
+      color: 'from-blue-500 to-blue-600',
+      bgColor: 'bg-blue-50'
+    },
+    { 
+      icon: Users, 
+      label: 'Veteran Mentors', 
+      value: '250+',
+      color: 'from-amber-500 to-amber-600',
+      bgColor: 'bg-amber-50'
+    },
+    { 
+      icon: Award, 
+      label: 'Certifications', 
+      value: '45+',
+      color: 'from-green-500 to-green-600',
+      bgColor: 'bg-green-50'
+    }
+  ];
+
+  const features = [
+    {
+      icon: Target,
+      title: 'Skills Translation',
+      description: 'Convert your military experience into civilian career opportunities',
+      link: 'SkillsTranslator'
+    },
+    {
+      icon: Users,
+      title: 'Mentorship Network',
+      description: 'Connect with veterans who have successfully transitioned',
+      link: 'Mentorship'
+    },
+    {
+      icon: Shield,
+      title: 'Career Resources',
+      description: 'Access resume templates, interview guides, and VA benefits info',
+      link: 'Resources'
+    }
+  ];
+
+  if (!user) {
+    return (
+      <div className="min-h-[80vh]">
+        {/* Hero Section with Animated Streaks */}
+        <HeroWithStreaks user={null} userStreak={14} />
+
+        {/* Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-20">
+          {stats.map((stat, index) => {
+            const Icon = stat.icon;
+            return (
+              <Card key={index} className="border-0 shadow-lg hover:shadow-xl transition-all">
+                <CardContent className="p-8">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-slate-600 mb-2">{stat.label}</p>
+                      <p className="text-4xl font-bold text-slate-900">{stat.value}</p>
+                    </div>
+                    <div className={`w-16 h-16 ${stat.bgColor} rounded-2xl flex items-center justify-center`}>
+                      <Icon className="w-8 h-8 text-blue-900" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+
+        {/* Features */}
+        <div className="mb-20">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
+              Everything You Need To Succeed
+            </h2>
+            <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+              Comprehensive tools and resources designed specifically for veteran career transitions
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {features.map((feature, index) => {
+              const Icon = feature.icon;
+              return (
+                <Link key={index} to={createPageUrl(feature.link)}>
+                  <Card className="border-0 shadow-md hover:shadow-xl transition-all h-full group cursor-pointer">
+                    <CardContent className="p-8">
+                      <div className={`w-14 h-14 bg-gradient-to-br from-blue-900 to-blue-700 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
+                        <Icon className="w-7 h-7 text-white" />
+                      </div>
+                      <h3 className="text-xl font-bold text-slate-900 mb-3">{feature.title}</h3>
+                      <p className="text-slate-600 leading-relaxed">{feature.description}</p>
+                    </CardContent>
+                  </Card>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Featured Courses */}
+        {courses.length > 0 && (
+          <div>
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h2 className="text-3xl font-bold text-slate-900 mb-2">Featured Courses</h2>
+                <p className="text-slate-600">Start learning today with our top-rated courses</p>
+              </div>
+              <Link to={createPageUrl('Courses')}>
+                <Button variant="outline">
+                  View All
+                  <ArrowRight className="ml-2 w-4 h-4" />
+                </Button>
+              </Link>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {courses.map((course) => (
+                <Card key={course.id} className="border-0 shadow-md hover:shadow-xl transition-all group">
+                  <div className="aspect-video bg-gradient-to-br from-blue-100 to-blue-50 flex items-center justify-center">
+                    <BookOpen className="w-12 h-12 text-blue-900" />
+                  </div>
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-xs font-medium text-blue-900 bg-blue-100 px-3 py-1 rounded-full">
+                        {course.category}
+                      </span>
+                      <span className="text-xs text-slate-500">{course.duration_hours}h</span>
+                    </div>
+                    <h3 className="text-lg font-bold text-slate-900 mb-2 group-hover:text-blue-900 transition-colors">
+                      {course.title}
+                    </h3>
+                    <p className="text-sm text-slate-600 line-clamp-2 mb-4">{course.description}</p>
+                    <Button
+                      onClick={() => base44.auth.redirectToLogin()}
+                      variant="outline"
+                      className="w-full"
+                    >
+                      Enroll Now
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Calculate user's learning streak (days with activity)
+  const calculateUserStreak = () => {
+    if (!enrollments || enrollments.length === 0) return 0;
+    // Simple calculation - you can enhance this based on actual activity
+    return Math.min(enrollments.length * 2, 30); // Example: 2 days per enrollment, max 30
+  };
+
+  return (
+    <div>
+      {/* Hero Section for Logged In Users */}
+      <HeroWithStreaks user={user} userStreak={calculateUserStreak()} />
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {stats.map((stat, index) => {
+          const Icon = stat.icon;
+          return (
+            <Card key={index} className="border-0 shadow-md">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-600 mb-1">{stat.label}</p>
+                    <p className="text-3xl font-bold text-slate-900">{stat.value}</p>
+                  </div>
+                  <div className={`w-14 h-14 ${stat.bgColor} rounded-xl flex items-center justify-center`}>
+                    <Icon className="w-7 h-7 text-blue-900" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Current Courses */}
+      {enrollments.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-slate-900 mb-6">Your Courses</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {enrollments.slice(0, 4).map((enrollment) => (
+              <Card key={enrollment.id} className="border-0 shadow-md hover:shadow-lg transition-all">
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <span className="text-xs font-medium text-blue-900 bg-blue-100 px-3 py-1 rounded-full">
+                        {enrollment.status.replace('_', ' ')}
+                      </span>
+                    </div>
+                    <TrendingUp className="w-5 h-5 text-green-600" />
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-900 mb-3">Course {enrollment.course_id}</h3>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-slate-600">Progress</span>
+                      <span className="font-medium text-slate-900">{enrollment.progress_percentage}%</span>
+                    </div>
+                    <Progress value={enrollment.progress_percentage} className="h-2" />
+                  </div>
+                  <Link to={createPageUrl('Courses')}>
+                    <Button variant="outline" className="w-full mt-4">
+                      Continue Learning
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {features.map((feature, index) => {
+          const Icon = feature.icon;
+          return (
+            <Link key={index} to={createPageUrl(feature.link)}>
+              <Card className="border-0 shadow-md hover:shadow-xl transition-all h-full group cursor-pointer">
+                <CardContent className="p-6">
+                  <div className={`w-12 h-12 bg-gradient-to-br from-blue-900 to-blue-700 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+                    <Icon className="w-6 h-6 text-white" />
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-900 mb-2">{feature.title}</h3>
+                  <p className="text-sm text-slate-600">{feature.description}</p>
+                </CardContent>
+              </Card>
+            </Link>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
