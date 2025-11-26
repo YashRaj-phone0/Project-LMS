@@ -1,0 +1,57 @@
+{
+  "name": "Enrollment",
+  "type": "object",
+  "properties": {
+    "course_id": {
+      "type": "string",
+      "description": "Reference to Course entity"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "Enrolled user email"
+    },
+    "current_module_index": {
+      "type": "number",
+      "default": 0,
+      "description": "Current module being studied"
+    },
+    "progress_percentage": {
+      "type": "number",
+      "default": 0,
+      "description": "Overall completion percentage"
+    },
+    "completed_modules": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "default": [],
+      "description": "Array of completed module indices"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "in_progress",
+        "completed",
+        "paused"
+      ],
+      "default": "in_progress"
+    },
+    "started_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "completed_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "last_accessed": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "course_id",
+    "user_email"
+  ]
+}
