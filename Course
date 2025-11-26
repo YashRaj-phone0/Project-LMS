@@ -1,0 +1,94 @@
+{
+  "name": "Course",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Course title"
+    },
+    "description": {
+      "type": "string",
+      "description": "Detailed course description"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "IT & Cybersecurity",
+        "Project Management",
+        "Healthcare",
+        "Logistics & Supply Chain",
+        "Business & Entrepreneurship",
+        "Skilled Trades",
+        "Leadership & Management"
+      ],
+      "description": "Course category"
+    },
+    "difficulty": {
+      "type": "string",
+      "enum": [
+        "Beginner",
+        "Intermediate",
+        "Advanced"
+      ],
+      "default": "Beginner"
+    },
+    "duration_hours": {
+      "type": "number",
+      "description": "Estimated hours to complete"
+    },
+    "thumbnail_url": {
+      "type": "string",
+      "description": "Course thumbnail image"
+    },
+    "learning_outcomes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "What students will learn"
+    },
+    "modules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string",
+            "description": "Module content in markdown"
+          },
+          "video_url": {
+            "type": "string"
+          },
+          "duration_minutes": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "instructor_name": {
+      "type": "string"
+    },
+    "instructor_bio": {
+      "type": "string"
+    },
+    "total_enrolled": {
+      "type": "number",
+      "default": 0
+    },
+    "is_featured": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "title",
+    "description",
+    "category"
+  ]
+}
