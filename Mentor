@@ -1,0 +1,69 @@
+{
+  "name": "Mentor",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "email": {
+      "type": "string"
+    },
+    "photo_url": {
+      "type": "string"
+    },
+    "military_branch": {
+      "type": "string",
+      "enum": [
+        "Army",
+        "Navy",
+        "Air Force",
+        "Marines",
+        "Coast Guard",
+        "Space Force"
+      ]
+    },
+    "years_of_service": {
+      "type": "number"
+    },
+    "current_role": {
+      "type": "string",
+      "description": "Current civilian job title"
+    },
+    "current_company": {
+      "type": "string"
+    },
+    "expertise_areas": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Areas where mentor can provide guidance"
+    },
+    "bio": {
+      "type": "string",
+      "description": "Mentor's story and background"
+    },
+    "linkedin_url": {
+      "type": "string"
+    },
+    "availability": {
+      "type": "string",
+      "enum": [
+        "Available",
+        "Limited",
+        "Not Available"
+      ],
+      "default": "Available"
+    },
+    "total_mentees": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "required": [
+    "name",
+    "email",
+    "military_branch",
+    "current_role"
+  ]
+}
