@@ -1,0 +1,237 @@
+import React, { useState } from 'react';
+import { base44 } from '@/api/base44Client';
+import { useQuery } from '@tanstack/react-query';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Users, Search, Briefcase, Award, MessageCircle, Linkedin } from 'lucide-react';
+
+export default function Mentorship() {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedBranch, setSelectedBranch] = useState('all');
+  const [selectedExpertise, setSelectedExpertise] = useState('all');
+
+  const { data: mentors = [], isLoading } = useQuery({
+    queryKey: ['mentors'],
+    queryFn: () => base44.entities.Mentor.list('-created_date', 100)
+  });
+
+  const branches = ['Army', 'Navy', 'Air Force', 'Marines', 'Coast Guard', 'Space Force'];
+  
+  const expertiseAreas = [
+    'Project Management',
+    'IT & Cybersecurity',
+    'Healthcare',
+    'Business',
+    'Engineering',
+    'Leadership'
+  ];
+
+  const filteredMentors = mentors.filter(mentor => {
+    const matchesSearch = mentor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         mentor.current_role.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesBranch = selectedBranch === 'all' || mentor.military_branch === selectedBranch;
+    const matchesExpertise = selectedExpertise === 'all' || 
+                            mentor.expertise_areas?.includes(selectedExpertise);
+    return matchesSearch && matchesBranch && matchesExpertise;
+  });
+
+  const availabilityColors = {
+    'Available': 'bg-green-100 text-green-800 border-green-200',
+    'Limited': 'bg-yellow-100 text-yellow-800 border-yellow-200',
+    'Not Available': 'bg-red-100 text-red-800 border-red-200'
+  };
+
+  const branchColors = {
+    'Army': 'bg-green-100 text-green-800',
+    'Navy': 'bg-blue-100 text-blue-800',
+    'Air Force': 'bg-sky-100 text-sky-800',
+    'Marines': 'bg-red-100 text-red-800',
+    'Coast Guard': 'bg-orange-100 text-orange-800',
+    'Space Force': 'bg-purple-100 text-purple-800'
+  };
+
+  return (
+    <div>
+      {/* Header */}
+      <div className="text-center mb-12">
+        <div className="inline-flex items-center space-x-2 bg-amber-100 px-4 py-2 rounded-full mb-4">
+          <Users className="w-5 h-5 text-amber-700" />
+          <span className="text-sm font-medium text-amber-700">Veteran Mentorship Network</span>
+        </div>
+        <h1 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
+          Connect With Veteran Mentors
+        </h1>
+        <p className="text-xl text-slate-600 max-w-3xl mx-auto">
+          Get guidance from veterans who have successfully navigated the transition to civilian careers
+        </p>
+      </div>
+
+      {/* Filters */}
+      <Card className="mb-8 border-0 shadow-md">
+        <CardContent className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+              <Input
+                placeholder="Search mentors..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Select value={selectedBranch} onValueChange={setSelectedBranch}>
+              <SelectTrigger>
+                <SelectValue placeholder="Military Branch" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Branches</SelectItem>
+                {branches.map(branch => (
+                  <SelectItem key={branch} value={branch}>{branch}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={selectedExpertise} onValueChange={setSelectedExpertise}>
+              <SelectTrigger>
+                <SelectValue placeholder="Expertise Area" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Expertise</SelectItem>
+                {expertiseAreas.map(area => (
+                  <SelectItem key={area} value={area}>{area}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Mentors Grid */}
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3, 4, 5, 6].map(i => (
+            <Card key={i} className="border-0 shadow-md">
+              <CardContent className="p-6">
+                <div className="w-20 h-20 bg-slate-200 rounded-full animate-pulse mb-4" />
+                <div className="h-4 bg-slate-200 rounded animate-pulse mb-2" />
+                <div className="h-4 bg-slate-200 rounded animate-pulse w-2/3" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : filteredMentors.length === 0 ? (
+        <Card className="border-0 shadow-md">
+          <CardContent className="p-12 text-center">
+            <Users className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-slate-900 mb-2">No mentors found</h3>
+            <p className="text-slate-600">Try adjusting your search filters</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredMentors.map((mentor) => (
+            <Card key={mentor.id} className="border-0 shadow-md hover:shadow-xl transition-all group">
+              <CardContent className="p-6">
+                {/* Avatar */}
+                <div className="flex items-start justify-between mb-4">
+                  <div className="w-20 h-20 bg-gradient-to-br from-blue-900 to-blue-700 rounded-full flex items-center justify-center text-white text-2xl font-bold shadow-lg">
+                    {mentor.name.charAt(0)}
+                  </div>
+                  <Badge className={`border ${availabilityColors[mentor.availability]}`}>
+                    {mentor.availability}
+                  </Badge>
+                </div>
+
+                {/* Info */}
+                <h3 className="text-lg font-bold text-slate-900 mb-1">{mentor.name}</h3>
+                <p className="text-sm text-slate-600 mb-3">{mentor.current_role}</p>
+                {mentor.current_company && (
+                  <p className="text-sm text-slate-500 mb-4 flex items-center">
+                    <Briefcase className="w-4 h-4 mr-1" />
+                    {mentor.current_company}
+                  </p>
+                )}
+
+                {/* Branch & Service */}
+                <div className="flex items-center gap-2 mb-4">
+                  <Badge className={branchColors[mentor.military_branch]}>
+                    {mentor.military_branch}
+                  </Badge>
+                  <span className="text-xs text-slate-500">{mentor.years_of_service} years</span>
+                </div>
+
+                {/* Expertise Areas */}
+                {mentor.expertise_areas && mentor.expertise_areas.length > 0 && (
+                  <div className="mb-4">
+                    <p className="text-xs font-medium text-slate-700 mb-2">Expertise:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {mentor.expertise_areas.slice(0, 3).map((area, idx) => (
+                        <Badge key={idx} variant="outline" className="text-xs">
+                          {area}
+                        </Badge>
+                      ))}
+                      {mentor.expertise_areas.length > 3 && (
+                        <Badge variant="outline" className="text-xs">
+                          +{mentor.expertise_areas.length - 3}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Bio */}
+                {mentor.bio && (
+                  <p className="text-sm text-slate-600 line-clamp-3 mb-4">
+                    {mentor.bio}
+                  </p>
+                )}
+
+                {/* Stats */}
+                <div className="flex items-center gap-4 mb-4 text-sm text-slate-500">
+                  <span className="flex items-center">
+                    <Users className="w-4 h-4 mr-1" />
+                    {mentor.total_mentees || 0} mentees
+                  </span>
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-2">
+                  <Button 
+                    className="flex-1 bg-gradient-to-r from-blue-900 to-blue-700 hover:from-blue-800 hover:to-blue-600"
+                    disabled={mentor.availability === 'Not Available'}
+                  >
+                    <MessageCircle className="w-4 h-4 mr-2" />
+                    Connect
+                  </Button>
+                  {mentor.linkedin_url && (
+                    <Button variant="outline" size="icon" asChild>
+                      <a href={mentor.linkedin_url} target="_blank" rel="noopener noreferrer">
+                        <Linkedin className="w-4 h-4" />
+                      </a>
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Become a Mentor CTA */}
+      <Card className="mt-12 border-0 shadow-lg bg-gradient-to-r from-amber-500 to-amber-600 text-white">
+        <CardContent className="p-8 text-center">
+          <Award className="w-12 h-12 mx-auto mb-4" />
+          <h3 className="text-2xl font-bold mb-3">Become a Mentor</h3>
+          <p className="text-amber-100 mb-6 max-w-2xl mx-auto">
+            Have you successfully transitioned to a civilian career? Help other veterans by sharing your experience and guidance.
+          </p>
+          <Button size="lg" className="bg-white text-amber-600 hover:bg-amber-50">
+            Apply to Be a Mentor
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
