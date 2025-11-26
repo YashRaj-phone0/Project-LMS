@@ -1,0 +1,228 @@
+import React, { useState } from 'react';
+import { base44 } from '@/api/base44Client';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Award, Briefcase, Target, TrendingUp, Loader2, ChevronRight } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+
+export default function SkillsTranslator() {
+  const [mosCode, setMosCode] = useState('');
+  const [militaryBranch, setMilitaryBranch] = useState('');
+  const [results, setResults] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const branches = ['Army', 'Navy', 'Air Force', 'Marines', 'Coast Guard', 'Space Force'];
+
+  const handleTranslate = async () => {
+    if (!mosCode || !militaryBranch) return;
+
+    setIsLoading(true);
+    try {
+      const response = await base44.integrations.Core.InvokeLLM({
+        prompt: `You are a military-to-civilian career transition expert. 
+
+A veteran from the ${militaryBranch} with MOS/Job Code: ${mosCode} is looking to transition to civilian employment.
+
+Please provide:
+1. A brief description of what this military role typically involves
+2. 5-7 civilian job titles that align with this military experience
+3. For each job title, list 3-4 transferable skills from military service
+4. 2-3 recommended certifications or training that would strengthen their candidacy
+5. Estimated salary ranges for these positions (US market)
+
+Format the response in a clear, structured way that's easy to understand.`,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            military_role_description: { type: "string" },
+            civilian_jobs: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  job_title: { type: "string" },
+                  transferable_skills: {
+                    type: "array",
+                    items: { type: "string" }
+                  },
+                  salary_range: { type: "string" }
+                }
+              }
+            },
+            recommended_certifications: {
+              type: "array",
+              items: { type: "string" }
+            }
+          }
+        }
+      });
+
+      setResults(response);
+    } catch (error) {
+      console.error('Translation error:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="max-w-5xl mx-auto">
+      {/* Header */}
+      <div className="text-center mb-12">
+        <div className="inline-flex items-center space-x-2 bg-blue-100 px-4 py-2 rounded-full mb-4">
+          <Award className="w-5 h-5 text-blue-900" />
+          <span className="text-sm font-medium text-blue-900">Military Skills Translator</span>
+        </div>
+        <h1 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
+          Translate Your Military Experience
+        </h1>
+        <p className="text-xl text-slate-600 max-w-2xl mx-auto">
+          Discover how your military service translates to valuable civilian career opportunities
+        </p>
+      </div>
+
+      {/* Input Form */}
+      <Card className="mb-8 border-0 shadow-xl">
+        <CardHeader className="bg-gradient-to-r from-blue-900 to-blue-700 text-white rounded-t-lg">
+          <CardTitle className="text-2xl">Enter Your Military Background</CardTitle>
+        </CardHeader>
+        <CardContent className="p-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div>
+              <Label htmlFor="branch" className="text-base mb-2 block">Military Branch</Label>
+              <Select value={militaryBranch} onValueChange={setMilitaryBranch}>
+                <SelectTrigger id="branch" className="h-12">
+                  <SelectValue placeholder="Select your branch" />
+                </SelectTrigger>
+                <SelectContent>
+                  {branches.map(branch => (
+                    <SelectItem key={branch} value={branch}>{branch}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="mos" className="text-base mb-2 block">MOS/Job Code</Label>
+              <Input
+                id="mos"
+                placeholder="e.g., 11B, 68W, 0311"
+                value={mosCode}
+                onChange={(e) => setMosCode(e.target.value)}
+                className="h-12"
+              />
+            </div>
+          </div>
+          <Button
+            onClick={handleTranslate}
+            disabled={!mosCode || !militaryBranch || isLoading}
+            size="lg"
+            className="w-full bg-gradient-to-r from-blue-900 to-blue-700 hover:from-blue-800 hover:to-blue-600 h-12"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 w-5 h-5 animate-spin" />
+                Analyzing Your Experience...
+              </>
+            ) : (
+              <>
+                Translate My Skills
+                <ChevronRight className="ml-2 w-5 h-5" />
+              </>
+            )}
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Results */}
+      {results && (
+        <div className="space-y-6">
+          {/* Military Role Description */}
+          <Card className="border-0 shadow-lg">
+            <CardHeader className="bg-blue-50">
+              <CardTitle className="flex items-center text-xl">
+                <Award className="w-5 h-5 mr-2 text-blue-900" />
+                Your Military Role
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <p className="text-slate-700 leading-relaxed">{results.military_role_description}</p>
+            </CardContent>
+          </Card>
+
+          {/* Civilian Job Matches */}
+          <div>
+            <h2 className="text-2xl font-bold text-slate-900 mb-4 flex items-center">
+              <Briefcase className="w-6 h-6 mr-2 text-blue-900" />
+              Matching Civilian Careers
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {results.civilian_jobs.map((job, index) => (
+                <Card key={index} className="border-0 shadow-md hover:shadow-lg transition-all">
+                  <CardContent className="p-6">
+                    <div className="flex items-start justify-between mb-3">
+                      <h3 className="text-lg font-bold text-slate-900">{job.job_title}</h3>
+                      <Badge className="bg-green-100 text-green-800 border-green-200">
+                        {job.salary_range}
+                      </Badge>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-slate-700 mb-2">Transferable Skills:</p>
+                      <ul className="space-y-1">
+                        {job.transferable_skills.map((skill, idx) => (
+                          <li key={idx} className="flex items-start text-sm text-slate-600">
+                            <ChevronRight className="w-4 h-4 mr-1 mt-0.5 text-blue-900 flex-shrink-0" />
+                            {skill}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+
+          {/* Recommended Certifications */}
+          <Card className="border-0 shadow-lg">
+            <CardHeader className="bg-amber-50">
+              <CardTitle className="flex items-center text-xl">
+                <Target className="w-5 h-5 mr-2 text-amber-700" />
+                Recommended Certifications
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <p className="text-sm text-slate-600 mb-4">
+                These certifications can strengthen your candidacy and demonstrate expertise to civilian employers:
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {results.recommended_certifications.map((cert, index) => (
+                  <div key={index} className="flex items-center p-3 bg-slate-50 rounded-lg">
+                    <TrendingUp className="w-5 h-5 mr-3 text-amber-600" />
+                    <span className="text-slate-700">{cert}</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Next Steps */}
+          <Card className="border-0 shadow-lg bg-gradient-to-r from-blue-900 to-blue-700 text-white">
+            <CardContent className="p-8 text-center">
+              <h3 className="text-2xl font-bold mb-3">Ready to Start Your Journey?</h3>
+              <p className="text-blue-100 mb-6">
+                Explore our courses tailored to help you gain the skills and certifications employers are looking for
+              </p>
+              <Button size="lg" className="bg-white text-blue-900 hover:bg-blue-50">
+                Browse Relevant Courses
+                <ChevronRight className="ml-2 w-5 h-5" />
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+    </div>
+  );
+}
