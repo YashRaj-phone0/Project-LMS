@@ -1,0 +1,58 @@
+{
+  "name": "Resource",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "resource_type": {
+      "type": "string",
+      "enum": [
+        "Resume Template",
+        "Interview Guide",
+        "Career Guide",
+        "Benefits Info",
+        "Certification Guide",
+        "Networking Tips",
+        "Salary Negotiation",
+        "Skills Assessment"
+      ]
+    },
+    "file_url": {
+      "type": "string",
+      "description": "Link to downloadable resource"
+    },
+    "content": {
+      "type": "string",
+      "description": "Resource content if web-based"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "Job Search",
+        "Career Planning",
+        "VA Benefits",
+        "Education",
+        "Professional Development",
+        "Wellness"
+      ]
+    },
+    "downloads_count": {
+      "type": "number",
+      "default": 0
+    },
+    "is_featured": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "title",
+    "description",
+    "resource_type",
+    "category"
+  ]
+}
