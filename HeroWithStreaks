@@ -1,0 +1,343 @@
+import React, { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '../utils';
+import { Zap } from 'lucide-react';
+
+export default function HeroWithStreaks({ user, userStreak = 14 }) {
+  const streaksContainerRef = useRef(null);
+  const [displayStreak, setDisplayStreak] = useState(0);
+
+  useEffect(() => {
+    // Create animated streaks
+    const STREAK_COUNT = 8;
+    const container = streaksContainerRef.current;
+    if (!container) return;
+
+    const COLORS = [
+      'linear-gradient(90deg, rgba(255,120,120,0.95), rgba(255,200,120,0.75))',
+      'linear-gradient(90deg, rgba(120,200,255,0.9), rgba(120,160,255,0.7))',
+      'linear-gradient(90deg, rgba(120,255,180,0.9), rgba(80,210,255,0.7))',
+      'linear-gradient(90deg, rgba(255,160,230,0.9), rgba(240,120,200,0.7))'
+    ];
+
+    // Clear existing streaks
+    container.innerHTML = '';
+
+    for (let i = 0; i < STREAK_COUNT; i++) {
+      const s = document.createElement('div');
+      s.className = 'streak';
+      
+      const top = Math.random() * 100;
+      s.style.top = `${top}%`;
+
+      const rotate = -8 + Math.random() * -8;
+      s.style.transform = `rotate(${rotate}deg)`;
+
+      const color = COLORS[i % COLORS.length];
+      s.style.background = color;
+
+      const widthPct = 25 + Math.random() * 55;
+      const heightPx = 18 + Math.random() * 36;
+      s.style.width = `${widthPct}%`;
+      s.style.height = `${heightPx}px`;
+
+      const duration = 6 + Math.random() * 9;
+      const delay = Math.random() * -10;
+      s.style.animation = `sweep ${duration}s linear ${delay}s infinite`;
+
+      s.style.opacity = 0.7 + Math.random() * 0.25;
+
+      container.appendChild(s);
+    }
+
+    // Check for reduced motion preference
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (mq.matches) {
+      Array.from(container.querySelectorAll('.streak')).forEach(el => {
+        el.style.animationPlayState = 'paused';
+        el.style.filter = 'blur(3px)';
+      });
+    }
+
+    // Animate streak counter
+    const target = Math.min(999, userStreak);
+    let cur = 0;
+    const step = Math.max(1, Math.floor(target / 25));
+    const interval = setInterval(() => {
+      cur += step;
+      if (cur >= target) {
+        cur = target;
+        clearInterval(interval);
+      }
+      setDisplayStreak(cur);
+    }, 40);
+
+    return () => clearInterval(interval);
+  }, [userStreak]);
+
+  return (
+    <>
+      <style>{`
+        .hero-streaks {
+          position: relative;
+          overflow: hidden;
+          min-height: 60vh;
+          display: flex;
+          align-items: center;
+          padding: 4rem 2rem;
+          box-sizing: border-box;
+          background: linear-gradient(120deg, #06143a 0%, #0b375f 50%, #0b2240 100%);
+          color: white;
+          isolation: isolate;
+          margin: -2rem -1rem 2rem -1rem;
+        }
+
+        @media (min-width: 640px) {
+          .hero-streaks {
+            margin: -2rem -1.5rem 2rem -1.5rem;
+          }
+        }
+
+        @media (min-width: 1024px) {
+          .hero-streaks {
+            margin: -2rem -2rem 2rem -2rem;
+          }
+        }
+
+        .hero-inner {
+          max-width: 1100px;
+          margin: 0 auto;
+          display: flex;
+          gap: 2rem;
+          align-items: center;
+          z-index: 6;
+          width: 100%;
+          flex-wrap: wrap;
+        }
+
+        .hero-streaks h1 {
+          font-size: clamp(1.6rem, 2.8vw, 3rem);
+          line-height: 1.05;
+          margin: 0 0 0.6rem 0;
+          letter-spacing: -0.02em;
+          font-weight: 700;
+        }
+
+        .hero-streaks p {
+          margin: 0;
+          font-size: clamp(.95rem, 1.5vw, 1.15rem);
+          opacity: 0.92;
+        }
+
+        .streaks {
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          z-index: 2;
+        }
+
+        .streak {
+          position: absolute;
+          top: 0;
+          left: -30%;
+          height: 2.5rem;
+          width: 35%;
+          transform: rotate(-12deg);
+          filter: blur(8px);
+          opacity: .9;
+          mix-blend-mode: screen;
+          border-radius: 6rem;
+          will-change: transform, opacity;
+        }
+
+        @media (max-width: 640px) {
+          .streak {
+            height: 1.6rem;
+            width: 60%;
+            transform: rotate(-8deg);
+            filter: blur(6px);
+          }
+          .hero-streaks {
+            padding: 3rem 1rem;
+            min-height: 48vh;
+          }
+        }
+
+        @keyframes sweep {
+          0% { transform: translateX(-130%) rotate(-12deg) scaleX(0.8); opacity: 0; }
+          8% { opacity: 1; }
+          88% { opacity: 1; }
+          100% { transform: translateX(220%) rotate(-12deg) scaleX(1.0); opacity: 0; }
+        }
+
+        .float {
+          position: absolute;
+          border-radius: 28px;
+          opacity: .06;
+          backdrop-filter: blur(0.6px);
+          z-index: 1;
+          filter: blur(6px);
+        }
+
+        .float.one {
+          width: 320px;
+          height: 120px;
+          left: 4%;
+          top: 12%;
+          background: linear-gradient(90deg,#74b9ff,#6c5ce7);
+          animation: floaty 10s ease-in-out infinite;
+        }
+
+        .float.two {
+          width: 260px;
+          height: 160px;
+          right: 6%;
+          top: 18%;
+          background: linear-gradient(90deg,#ff7ab6,#f093fb);
+          animation: floaty 14s ease-in-out infinite;
+        }
+
+        .float.three {
+          width: 380px;
+          height: 140px;
+          left: 15%;
+          bottom: 8%;
+          background: linear-gradient(90deg,#22c1c3,#fdbb2d);
+          animation: floaty 12s ease-in-out infinite;
+        }
+
+        @keyframes floaty {
+          0% { transform: translateY(0) rotate(0deg); }
+          50% { transform: translateY(-18px) rotate(2deg); }
+          100% { transform: translateY(0) rotate(0deg); }
+        }
+
+        .streak-badge {
+          display: inline-flex;
+          gap: .7rem;
+          align-items: center;
+          background: rgba(255,255,255,0.06);
+          padding: .55rem .9rem;
+          border-radius: 999px;
+          border: 1px solid rgba(255,255,255,0.06);
+          font-weight: 600;
+          font-size: .95rem;
+          backdrop-filter: blur(3px);
+        }
+
+        .streak-badge .bolt {
+          display: inline-grid;
+          place-items: center;
+          width: 36px;
+          height: 36px;
+          border-radius: 10px;
+          background: linear-gradient(90deg,#ffcc33,#ff6b6b);
+          box-shadow: 0 6px 18px rgba(255,107,107,0.18);
+          transform: rotate(-10deg);
+        }
+
+        .streak-badge .count {
+          min-width: 44px;
+          text-align: right;
+          font-variant-numeric: tabular-nums;
+        }
+
+        .hero-inner {
+          animation: heroIn .9s cubic-bezier(.2,.9,.2,1) both;
+        }
+
+        @keyframes heroIn {
+          from { transform: translateY(12px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+
+        .cta-hero {
+          background: linear-gradient(90deg,#02aab0,#00cdac);
+          color: white;
+          padding: .85rem 1.5rem;
+          border-radius: 10px;
+          display: inline-block;
+          text-decoration: none;
+          font-weight: 700;
+          box-shadow: 0 8px 24px rgba(2,170,176,0.22);
+          transform: translateZ(0);
+          transition: all 0.3s ease;
+        }
+
+        .cta-hero:hover {
+          box-shadow: 0 12px 32px rgba(2,170,176,0.35);
+          transform: translateY(-2px);
+        }
+
+        .hero-content-left {
+          flex: 1;
+          min-width: 300px;
+        }
+
+        .hero-content-right {
+          margin-left: auto;
+          text-align: right;
+        }
+
+        @media (max-width: 768px) {
+          .hero-content-right {
+            margin-left: 0;
+            text-align: left;
+            width: 100%;
+          }
+        }
+      `}</style>
+
+      <section className="hero-streaks" aria-label="Hero with streaks">
+        <div className="streaks" ref={streaksContainerRef} aria-hidden="true"></div>
+
+        <div className="float one"></div>
+        <div className="float two"></div>
+        <div className="float three"></div>
+
+        <div className="hero-inner">
+          <div className="hero-content-left">
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '.6rem', flexWrap: 'wrap' }}>
+              <div className="streak-badge" aria-label={`Learning streak: ${displayStreak} days`}>
+                <div className="bolt">
+                  <Zap className="w-5 h-5" style={{ color: 'white' }} />
+                </div>
+                <div>
+                  <div style={{ fontSize: '.8rem', opacity: '.84' }}>
+                    {user ? 'Your streak' : "Today's streak"}
+                  </div>
+                  <div className="count">{displayStreak}</div>
+                </div>
+              </div>
+
+              <div style={{ opacity: '.9', fontWeight: '600' }}>
+                VetLearn — Level up your career
+              </div>
+            </div>
+
+            <h1>Grow skills. Track progress. Win opportunities.</h1>
+            <p>
+              Engaging courses, motivating streaks, and a dashboard that helps veterans build momentum. 
+              Keep your streak going!
+            </p>
+          </div>
+
+          <div className="hero-content-right">
+            {user ? (
+              <Link className="cta-hero" to={createPageUrl('Courses')}>
+                Continue Learning
+              </Link>
+            ) : (
+              <button className="cta-hero" onClick={() => window.location.href = '/signup'}>
+                Get Started
+              </button>
+            )}
+            <div style={{ fontSize: '.85rem', opacity: '.8', marginTop: '.6rem' }}>
+              Earn badges, complete challenges, and stay consistent.
+            </div>
+          </div>
+        </div>
+      </section>
+    </>
+  );
+}
