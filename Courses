@@ -1,0 +1,215 @@
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '../utils';
+import { base44 } from '@/api/base44Client';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { BookOpen, Clock, Award, Filter, Search, ChevronRight } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+
+export default function Courses() {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedDifficulty, setSelectedDifficulty] = useState('all');
+  const [user, setUser] = useState(null);
+
+  const queryClient = useQueryClient();
+
+  React.useEffect(() => {
+    base44.auth.me().then(setUser).catch(() => {});
+  }, []);
+
+  const { data: courses = [], isLoading } = useQuery({
+    queryKey: ['courses'],
+    queryFn: () => base44.entities.Course.list('-created_date', 100)
+  });
+
+  const { data: enrollments = [] } = useQuery({
+    queryKey: ['enrollments', user?.email],
+    queryFn: () => user ? base44.entities.Enrollment.filter({ user_email: user.email }) : [],
+    enabled: !!user
+  });
+
+  const enrollMutation = useMutation({
+    mutationFn: async (courseId) => {
+      if (!user) {
+        base44.auth.redirectToLogin();
+        return;
+      }
+      return base44.entities.Enrollment.create({
+        course_id: courseId,
+        user_email: user.email,
+        started_date: new Date().toISOString().split('T')[0]
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['enrollments'] });
+    }
+  });
+
+  const categories = [
+    'IT & Cybersecurity',
+    'Project Management',
+    'Healthcare',
+    'Logistics & Supply Chain',
+    'Business & Entrepreneurship',
+    'Skilled Trades',
+    'Leadership & Management'
+  ];
+
+  const filteredCourses = courses.filter(course => {
+    const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         course.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = selectedCategory === 'all' || course.category === selectedCategory;
+    const matchesDifficulty = selectedDifficulty === 'all' || course.difficulty === selectedDifficulty;
+    return matchesSearch && matchesCategory && matchesDifficulty;
+  });
+
+  const isEnrolled = (courseId) => {
+    return enrollments.some(e => e.course_id === courseId);
+  };
+
+  const difficultyColors = {
+    'Beginner': 'bg-green-100 text-green-800 border-green-200',
+    'Intermediate': 'bg-yellow-100 text-yellow-800 border-yellow-200',
+    'Advanced': 'bg-red-100 text-red-800 border-red-200'
+  };
+
+  return (
+    <div>
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold text-slate-900 mb-3">Course Library</h1>
+        <p className="text-lg text-slate-600">Explore courses designed to help you transition and advance your civilian career</p>
+      </div>
+
+      {/* Filters */}
+      <Card className="mb-8 border-0 shadow-md">
+        <CardContent className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="md:col-span-2">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+                <Input
+                  placeholder="Search courses..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <SelectTrigger>
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                {categories.map(cat => (
+                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={selectedDifficulty} onValueChange={setSelectedDifficulty}>
+              <SelectTrigger>
+                <SelectValue placeholder="Difficulty" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Levels</SelectItem>
+                <SelectItem value="Beginner">Beginner</SelectItem>
+                <SelectItem value="Intermediate">Intermediate</SelectItem>
+                <SelectItem value="Advanced">Advanced</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Results */}
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[1, 2, 3, 4, 5, 6].map(i => (
+            <Card key={i} className="border-0 shadow-md">
+              <div className="aspect-video bg-slate-200 animate-pulse" />
+              <CardContent className="p-6">
+                <div className="h-4 bg-slate-200 rounded animate-pulse mb-3" />
+                <div className="h-4 bg-slate-200 rounded animate-pulse w-2/3" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : filteredCourses.length === 0 ? (
+        <Card className="border-0 shadow-md">
+          <CardContent className="p-12 text-center">
+            <BookOpen className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-slate-900 mb-2">No courses found</h3>
+            <p className="text-slate-600">Try adjusting your filters or search term</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredCourses.map((course) => (
+            <Card key={course.id} className="border-0 shadow-md hover:shadow-xl transition-all group">
+              <div className="aspect-video bg-gradient-to-br from-blue-100 via-blue-50 to-amber-50 flex items-center justify-center relative overflow-hidden">
+                <BookOpen className="w-16 h-16 text-blue-900/20 group-hover:scale-110 transition-transform" />
+                {course.is_featured && (
+                  <div className="absolute top-3 right-3">
+                    <Badge className="bg-amber-500 text-white border-0">
+                      <Award className="w-3 h-3 mr-1" />
+                      Featured
+                    </Badge>
+                  </div>
+                )}
+              </div>
+              <CardContent className="p-6">
+                <div className="flex items-center gap-2 mb-3 flex-wrap">
+                  <Badge variant="outline" className="text-xs">
+                    {course.category}
+                  </Badge>
+                  <Badge variant="outline" className={`text-xs border ${difficultyColors[course.difficulty]}`}>
+                    {course.difficulty}
+                  </Badge>
+                  {course.duration_hours && (
+                    <span className="flex items-center text-xs text-slate-500">
+                      <Clock className="w-3 h-3 mr-1" />
+                      {course.duration_hours}h
+                    </span>
+                  )}
+                </div>
+                <h3 className="text-lg font-bold text-slate-900 mb-2 group-hover:text-blue-900 transition-colors line-clamp-2">
+                  {course.title}
+                </h3>
+                <p className="text-sm text-slate-600 line-clamp-3 mb-4">
+                  {course.description}
+                </p>
+                {course.instructor_name && (
+                  <p className="text-xs text-slate-500 mb-4">
+                    Instructor: {course.instructor_name}
+                  </p>
+                )}
+                {isEnrolled(course.id) ? (
+                  <Link to={createPageUrl('CourseDetail') + `?id=${course.id}`}>
+                    <Button className="w-full bg-green-600 hover:bg-green-700">
+                      Continue Learning
+                      <ChevronRight className="ml-2 w-4 h-4" />
+                    </Button>
+                  </Link>
+                ) : (
+                  <Button
+                    onClick={() => enrollMutation.mutate(course.id)}
+                    disabled={enrollMutation.isPending}
+                    className="w-full bg-gradient-to-r from-blue-900 to-blue-700 hover:from-blue-800 hover:to-blue-600"
+                  >
+                    Enroll Now
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
